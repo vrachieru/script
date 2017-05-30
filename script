@@ -1,0 +1,40 @@
+#!/bin/bash
+
+function _c() {
+    echo "Not implemented!"
+}
+
+function _java() {
+    javac "${1}"
+    java `basename "${1%.java}"` "${@:2}"
+    rm "${1}" "${1%.java}.class"
+}
+
+function _groovy() {
+    groovy "${1}" "${@:2}"
+    rm "${1}"
+}
+
+function _help() {
+    echo "Usage $0 [file.lang] [arguments]"
+}
+
+function _main() {
+    # Check that at least the filename argument is present
+    [[ $# -eq 0 ]] && _help && exit 1
+
+    # Check that the script file exists
+    [[ ! -e $1 ]] && echo "Script file $1 doesn't exist!" && exit 1
+
+    # Make temp copy without bang
+    [[ ! -d tmp ]] && mkdir tmp
+    cat $1 | sed 's/#!\/usr\/bin\/script//' > tmp/${1}
+
+    # Call the right method by the script's file extension
+    cd tmp && _${1##*.} ${@}
+
+    # Remove tmp folder if empty
+    [[ `ls -A ` ]] || rm -r ../tmp
+}
+
+[[ ${BASH_SOURCE[0]} == ${0} ]] && _main ${@}
